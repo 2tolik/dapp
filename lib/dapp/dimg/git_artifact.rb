@@ -277,8 +277,74 @@ module Dapp
         end
       end
 
+      def get_ruby2go_state_hash
+        {
+          "Name" => @name.to_s,
+          "As" => @as.to_s,
+          "Branch" => @branch.to_s,
+          "Commit" => @commit.to_s,
+          "Cwd" => @cwd.to_s,
+          "Owner" => @owner.to_s,
+          "Group" => @group.to_s,
+          "IncludePaths" => @include_paths,
+          "ExcludePaths" => @exclude_paths,
+          "StagesDependencies" => @stages_dependencies.map {|k, v| [_stages_map[k], Array(v).map(&:to_s)]}.to_h,
+          "Paramshash" => paramshash.to_s,
+          "GitRepo" => {},
+        }
+      end
+
+      def _stages_map
+        {
+          before_install: "beforeInstall",
+          install: "install",
+          before_setup: "beforeSetup",
+          setup: "setup",
+          build_artifact: "buildArtifact",
+        }
+      end
+
+      def _stages_map_reversed
+        _stages_map.map {|k, v| [v, k]}.to_h
+      end
+
+      def set_ruby2go_state_hash(new_state)
+        [
+          [:@name, new_state["Name"]],
+          [:@as, new_state["As"]],
+          [:@branch, new_state["Branch"]],
+          [:@commit, new_state["Commit"]],
+          [:@cwd, new_state["Cwd"]],
+          [:@owner, new_state["Owner"]],
+          [:@group, new_state["Group"]],
+        ].each do |var, new_value|
+          if new_value != ""
+            instance_variable_set(var, new_value)
+          end
+        end
+
+        @include_paths = new_state["IncludePaths"]
+        @exclude_paths = new_state["ExcludePaths"]
+        @stages_dependencies = new_state["StagesDependencies"].map do |k, v|
+          [_stages_map_reversed[k], v]
+        end
+      end
+
       def latest_commit
-        @latest_commit ||= (commit || repo.latest_commit(branch))
+        @latest_commit ||= begin
+          if commit
+            commit
+          else
+            res = dimg.dapp.ruby2go_git_artifact("state" => JSON.dump(get_ruby2go_state_hash), "command" => "LatestCommit")
+            self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
+
+            if res["error"]
+              raise res["error"] # FIXME: standard GitArtifact-related exception
+            else
+              res["data"]["result"]
+            end
+          end
+        end
       end
 
       def paramshash

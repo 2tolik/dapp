@@ -12,3 +12,5 @@ hostExports=(
 for hostExportLine in "${hostExports[@]}" ; do
   grep -q "^$hostExportLine$" /etc/exports || echo $hostExportLine | sudo tee -a /etc/exports
 done
+
+sudo systemctl restart nfs-server

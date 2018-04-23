@@ -15,6 +15,7 @@ Vagrant.configure("2") do |config|
 
     set -e
 
+    ping -c5 172.28.128.1
     sudo /sbin/mount -t nfs -o 'vers=3,mntudp,resvport,rw' 172.28.128.1:/tmp /tmp
     sudo /sbin/mount -t nfs -o 'vers=3,mntudp,resvport,rw' 172.28.128.1:#{ENV['GOPATH']} /Users/vagrant/go-workspace
   SHELL

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+apt-get install -y nfs-kernel-server nfs-common
+
 uid="$(id | grep -oP "uid=[0-9]+" | cut -d'=' -f2)"
 gid="$(id | grep -oP "gid=[0-9]+" | cut -d'=' -f2)"
 
